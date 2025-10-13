@@ -1,11 +1,80 @@
-import Link from 'next/link';
-import { ShieldCheck } from 'lucide-react';
+'use client';
+
+import { useState, useEffect } from 'react';
+import { useRouter } from 'next/navigation';
+import { ShieldCheck, LoaderCircle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { useToast } from '@/hooks/use-toast';
+import { useAuth, useUser, initiateEmailSignIn, addDocumentNonBlocking } from '@/firebase';
+import { collection, serverTimestamp } from 'firebase/firestore';
+import { useFirestore } from '@/firebase';
 
 export default function LoginPage() {
+  const router = useRouter();
+  const { toast } = useToast();
+  const auth = useAuth();
+  const firestore = useFirestore();
+  const { user, isUserLoading } = useUser();
+  const [email, setEmail] = useState('analyst@aptshield.com');
+  const [password, setPassword] = useState('password123');
+  const [loading, setLoading] = useState(false);
+
+  useEffect(() => {
+    if (!isUserLoading && user) {
+      router.push('/dashboard');
+    }
+  }, [user, isUserLoading, router]);
+
+  const handleSignIn = async () => {
+    setLoading(true);
+    try {
+      initiateEmailSignIn(auth, email, password);
+      
+      // The onAuthStateChanged listener in FirebaseProvider will handle the redirect.
+      // We can optimistically show a toast.
+      toast({
+        title: 'Signing in...',
+        description: 'You will be redirected shortly.',
+      });
+
+      // Log the sign-in action after a short delay to allow auth state to propagate
+      setTimeout(() => {
+        if (auth.currentUser) {
+          const logCollectionRef = collection(firestore, `users/${auth.currentUser.uid}/action_logs`);
+          addDocumentNonBlocking(logCollectionRef, {
+            actionType: 'user-login',
+            timestamp: serverTimestamp(),
+            details: `User signed in from IP: [user-ip-placeholder]`,
+          });
+        }
+      }, 2000);
+
+    } catch (error: any) {
+      console.error(error);
+      toast({
+        variant: 'destructive',
+        title: 'Authentication Failed',
+        description: error.message || 'Please check your credentials and try again.',
+      });
+      setLoading(false);
+    }
+    // We don't setLoading(false) here because the page will redirect on success.
+    // If there's an error that doesn't get caught by the listener, we might need to handle it.
+  };
+
+  // If user data is loading, or user is logged in, show a loading state.
+  if (isUserLoading || user) {
+    return (
+      <div className="flex min-h-screen flex-col items-center justify-center">
+        <LoaderCircle className="h-16 w-16 animate-spin text-primary" />
+        <p className="mt-4 text-muted-foreground">Loading...</p>
+      </div>
+    );
+  }
+
   return (
     <main className="flex min-h-screen flex-col items-center justify-center p-4">
       <div className="w-full max-w-md">
@@ -32,15 +101,27 @@ export default function LoginPage() {
                 id="email"
                 type="email"
                 placeholder="analyst@aptshield.com"
-                defaultValue="analyst@aptshield.com"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                disabled={loading}
               />
             </div>
             <div className="space-y-2">
               <Label htmlFor="password">Password</Label>
-              <Input id="password" type="password" defaultValue="••••••••" />
+              <Input
+                id="password"
+                type="password"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                disabled={loading}
+              />
             </div>
-            <Button asChild className="w-full">
-              <Link href="/dashboard">Sign In</Link>
+            <Button onClick={handleSignIn} disabled={loading} className="w-full">
+              {loading ? (
+                <LoaderCircle className="animate-spin" />
+              ) : (
+                'Sign In'
+              )}
             </Button>
           </CardContent>
         </Card>

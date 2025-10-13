@@ -13,8 +13,9 @@ import {
   ShieldCheck,
   Zap,
   TestTube,
+  Lock,
 } from 'lucide-react';
-
+import { useAuth } from '@/firebase';
 import {
   Sidebar,
   SidebarHeader,
@@ -29,7 +30,12 @@ import { Button } from '../ui/button';
 
 export function AppSidebar() {
   const pathname = usePathname();
+  const auth = useAuth();
   const isActive = (path: string) => pathname.startsWith(path);
+
+  const handleLogout = () => {
+    auth.signOut();
+  };
 
   return (
     <Sidebar>
@@ -105,14 +111,19 @@ export function AppSidebar() {
             <Rss />
             Threat Intel
           </SidebarNavLink>
+           <SidebarNavLink
+            href="/dashboard/security"
+            active={isActive('/dashboard/security')}
+          >
+            <Lock />
+            Security
+          </SidebarNavLink>
         </SidebarNav>
       </SidebarMain>
       <SidebarFooter>
-        <Button variant="ghost" className="w-full justify-start gap-2" asChild>
-          <Link href="/">
-            <Shield className="h-4 w-4" />
-            <span>Switch to Login</span>
-          </Link>
+        <Button variant="ghost" className="w-full justify-start gap-2" onClick={handleLogout}>
+          <Shield className="h-4 w-4" />
+          <span>Log Out</span>
         </Button>
       </SidebarFooter>
     </Sidebar>

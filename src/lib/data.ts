@@ -19,6 +19,7 @@ export const alerts: Alert[] = [
     description: 'LSASS memory access detected from an unusual process.',
     mitreAttackId: 'T1003.001',
     anomalyScore: 98,
+    isEncrypted: true,
   },
   {
     id: 'ALERT-002',
@@ -31,6 +32,7 @@ export const alerts: Alert[] = [
     description: 'PsExec used to move between finance servers.',
     mitreAttackId: 'T1570',
     anomalyScore: 85,
+    isEncrypted: true,
   },
   {
     id: 'ALERT-003',
@@ -55,6 +57,7 @@ export const alerts: Alert[] = [
     description: 'Large data upload to a known paste site from an internal system.',
     mitreAttackId: 'T1048.003',
     anomalyScore: 76,
+    isEncrypted: true,
   },
   {
     id: 'ALERT-005',
@@ -244,3 +247,18 @@ export const threatHuntingQueries = [
       tags: ['Execution', 'PowerShell'],
     },
   ];
+
+export const whitelistedIps = [
+    {
+        id: 'IP-001',
+        ipAddress: '203.0.113.1',
+        description: 'SOC Analyst Home IP',
+        expirationDate: '2025-01-01T00:00:00Z',
+    },
+    {
+        id: 'IP-002',
+        ipAddress: '198.51.100.25',
+        description: 'Vulnerability Scanner',
+        expirationDate: null,
+    },
+];

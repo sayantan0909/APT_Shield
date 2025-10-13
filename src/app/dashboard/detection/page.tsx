@@ -25,7 +25,7 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { Button } from '@/components/ui/button';
-import { FileDown, Search } from 'lucide-react';
+import { FileDown, Search, Lock } from 'lucide-react';
 import { ScrollArea } from '@/components/ui/scroll-area';
 
 const getSeverityVariant = (severity: Severity) => {
@@ -93,6 +93,7 @@ export default function DetectionPage() {
                 <TableHead>Threat / MITRE ID</TableHead>
                 <TableHead>Source</TableHead>
                 <TableHead>Affected Systems</TableHead>
+                <TableHead>Encrypted</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -117,6 +118,9 @@ export default function DetectionPage() {
                   </TableCell>
                   <TableCell>{alert.source}</TableCell>
                   <TableCell>{alert.affectedSystems.join(', ')}</TableCell>
+                  <TableCell>
+                    {alert.isEncrypted && <Lock className="h-4 w-4 text-accent" />}
+                  </TableCell>
                 </TableRow>
               ))}
             </TableBody>

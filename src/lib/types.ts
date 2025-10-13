@@ -11,6 +11,7 @@ export type Alert = {
   description: string;
   mitreAttackId: string;
   anomalyScore: number;
+  isEncrypted?: boolean;
 };
 
 export type Rule = {
@@ -66,3 +67,18 @@ export type ThreatHuntingQuery = {
     query: string;
     tags: string[];
 };
+
+export type AuditLog = {
+    id: string;
+    userId: string;
+    timestamp: any; // Firestore Timestamp
+    actionType: string;
+    details: string;
+}
+
+export type WhitelistedIp = {
+    id: string;
+    ipAddress: string;
+    description: string;
+    expirationDate?: any; // Firestore Timestamp
+}
