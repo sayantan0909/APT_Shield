@@ -17,6 +17,8 @@ export const alerts: Alert[] = [
     iocs: ['mimikatz.exe'],
     affectedSystems: ['DC01'],
     description: 'LSASS memory access detected from an unusual process.',
+    mitreAttackId: 'T1003.001',
+    anomalyScore: 98,
   },
   {
     id: 'ALERT-002',
@@ -27,6 +29,8 @@ export const alerts: Alert[] = [
     iocs: ['PsExec.exe'],
     affectedSystems: ['SRV-FIN-01', 'SRV-FIN-02'],
     description: 'PsExec used to move between finance servers.',
+    mitreAttackId: 'T1570',
+    anomalyScore: 85,
   },
   {
     id: 'ALERT-003',
@@ -37,6 +41,8 @@ export const alerts: Alert[] = [
     iocs: ['powershell.exe -enc'],
     affectedSystems: ['workstation-112'],
     description: 'Obfuscated PowerShell command executed.',
+    mitreAttackId: 'T1027',
+    anomalyScore: 62,
   },
   {
     id: 'ALERT-004',
@@ -47,6 +53,8 @@ export const alerts: Alert[] = [
     iocs: ['pastebin.com'],
     affectedSystems: ['workstation-88'],
     description: 'Large data upload to a known paste site from an internal system.',
+    mitreAttackId: 'T1048.003',
+    anomalyScore: 76,
   },
   {
     id: 'ALERT-005',
@@ -57,6 +65,8 @@ export const alerts: Alert[] = [
     iocs: ['93.184.216.34'],
     affectedSystems: ['web-server-03'],
     description: 'Multiple failed login attempts from a malicious IP followed by a successful one.',
+    mitreAttackId: 'T1190',
+    anomalyScore: 55,
   },
   {
     id: 'ALERT-006',
@@ -67,6 +77,8 @@ export const alerts: Alert[] = [
     iocs: ['adware.gen'],
     affectedSystems: ['workstation-201'],
     description: 'Generic adware detected and quarantined.',
+    mitreAttackId: 'T1204.002',
+    anomalyScore: 34,
   },
 ];
 
@@ -208,3 +220,27 @@ export const threatIntels: ThreatIntel[] = [
     aptGroups: ['Lazarus Group'],
   },
 ];
+
+export const threatHuntingQueries = [
+    {
+      id: 'THQ-001',
+      name: 'Unusual Process Execution',
+      description: 'Looks for processes that are not commonly run on workstations.',
+      query: 'process.name NOT IN ("chrome.exe", "outlook.exe", "powershell.exe", "cmd.exe") AND host.os.type: "windows"',
+      tags: ['Execution', 'Windows'],
+    },
+    {
+      id: 'THQ-002',
+      name: 'Network Connections to Public IPs from Servers',
+      description: 'Identifies outbound connections from servers to non-private IP addresses, which could indicate C2 communication.',
+      query: 'source.ip:"10.0.0.0/8" AND NOT destination.ip:"10.0.0.0/8" AND NOT destination.ip:"172.16.0.0/12" AND NOT destination.ip:"192.168.0.0/16"',
+      tags: ['C2', 'Network'],
+    },
+    {
+      id: 'THQ-003',
+      name: 'PowerShell Downloads',
+      description: 'Finds PowerShell commands that download files from the internet.',
+      query: 'process.name:"powershell.exe" AND process.command_line: "*System.Net.WebClient*" AND process.command_line: "*DownloadFile*"',
+      tags: ['Execution', 'PowerShell'],
+    },
+  ];

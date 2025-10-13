@@ -11,6 +11,8 @@ import {
   Shield,
   ShieldAlert,
   ShieldCheck,
+  Zap,
+  TestTube,
 } from 'lucide-react';
 
 import {
@@ -27,7 +29,7 @@ import { Button } from '../ui/button';
 
 export function AppSidebar() {
   const pathname = usePathname();
-  const isActive = (path: string) => pathname === path;
+  const isActive = (path: string) => pathname.startsWith(path);
 
   return (
     <Sidebar>
@@ -44,7 +46,7 @@ export function AppSidebar() {
           <SidebarNavHeader>
             <SidebarNavHeaderTitle>Analysis</SidebarNavHeaderTitle>
           </SidebarNavHeader>
-          <SidebarNavLink href="/dashboard" active={isActive('/dashboard')}>
+          <SidebarNavLink href="/dashboard" active={pathname === '/dashboard'}>
             <LayoutDashboard />
             Dashboard
           </SidebarNavLink>
@@ -61,6 +63,13 @@ export function AppSidebar() {
           >
             <FileSearch />
             Log Analysis
+          </SidebarNavLink>
+          <SidebarNavLink
+            href="/dashboard/threat-hunting"
+            active={isActive('/dashboard/threat-hunting')}
+          >
+            <TestTube />
+            Threat Hunting
           </SidebarNavLink>
         </SidebarNav>
 
@@ -81,6 +90,13 @@ export function AppSidebar() {
           >
             <GanttChartSquare />
             Detection Rules
+          </SidebarNavLink>
+           <SidebarNavLink
+            href="/dashboard/response"
+            active={isActive('/dashboard/response')}
+          >
+            <Zap />
+            Automated Response
           </SidebarNavLink>
           <SidebarNavLink
             href="/dashboard/threat-intel"

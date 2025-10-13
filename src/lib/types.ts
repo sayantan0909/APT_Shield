@@ -9,6 +9,8 @@ export type Alert = {
   iocs: string[];
   affectedSystems: string[];
   description: string;
+  mitreAttackId: string;
+  anomalyScore: number;
 };
 
 export type Rule = {
@@ -55,4 +57,12 @@ export type DashboardStats = {
   criticalAlerts: number;
   openIncidents: number;
   rulesActive: number;
+};
+
+export type ThreatHuntingQuery = {
+    id: string;
+    name: string;
+    description: string;
+    query: string;
+    tags: string[];
 };

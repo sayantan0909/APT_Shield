@@ -43,6 +43,13 @@ const getSeverityVariant = (severity: Severity) => {
   }
 };
 
+const getScoreColor = (score: number) => {
+  if (score > 90) return 'text-destructive';
+  if (score > 70) return 'text-warning-default';
+  if (score > 50) return 'text-yellow-500';
+  return 'text-green-500';
+}
+
 export default function DetectionPage() {
   return (
     <Card>
@@ -81,8 +88,9 @@ export default function DetectionPage() {
             <TableHeader>
               <TableRow>
                 <TableHead>Severity</TableHead>
+                <TableHead>Score</TableHead>
                 <TableHead>Timestamp</TableHead>
-                <TableHead>Threat</TableHead>
+                <TableHead>Threat / MITRE ID</TableHead>
                 <TableHead>Source</TableHead>
                 <TableHead>Affected Systems</TableHead>
               </TableRow>
@@ -96,12 +104,15 @@ export default function DetectionPage() {
                     </Badge>
                   </TableCell>
                   <TableCell>
+                    <span className={`font-bold ${getScoreColor(alert.anomalyScore)}`}>{alert.anomalyScore}</span>
+                  </TableCell>
+                  <TableCell>
                     {new Date(alert.timestamp).toLocaleString()}
                   </TableCell>
                   <TableCell>
                     <div className="font-medium">{alert.threatType}</div>
-                    <div className="text-sm text-muted-foreground">
-                      {alert.description}
+                    <div className="text-sm text-muted-foreground font-code">
+                      {alert.mitreAttackId}
                     </div>
                   </TableCell>
                   <TableCell>{alert.source}</TableCell>

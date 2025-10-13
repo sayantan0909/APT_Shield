@@ -36,6 +36,13 @@ const getSeverityVariant = (severity: Severity) => {
   }
 };
 
+const getScoreColor = (score: number) => {
+  if (score > 90) return 'text-destructive';
+  if (score > 70) return 'text-warning-default';
+  if (score > 50) return 'text-yellow-500';
+  return 'text-green-500';
+}
+
 export function RecentAlerts() {
   return (
     <Card>
@@ -59,6 +66,7 @@ export function RecentAlerts() {
             <TableHeader>
               <TableRow>
                 <TableHead>Severity</TableHead>
+                <TableHead>Score</TableHead>
                 <TableHead>Description</TableHead>
                 <TableHead className="hidden md:table-cell">Source</TableHead>
                 <TableHead className="text-right">Time</TableHead>
@@ -71,6 +79,9 @@ export function RecentAlerts() {
                     <Badge variant={getSeverityVariant(alert.severity)}>
                       {alert.severity}
                     </Badge>
+                  </TableCell>
+                  <TableCell>
+                    <span className={`font-bold ${getScoreColor(alert.anomalyScore)}`}>{alert.anomalyScore}</span>
                   </TableCell>
                   <TableCell>
                     <div className="font-medium">{alert.threatType}</div>
