@@ -8,16 +8,13 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { useToast } from '@/hooks/use-toast';
-import { useAuth, useUser, addDocumentNonBlocking } from '@/firebase';
-import { collection, serverTimestamp } from 'firebase/firestore';
-import { useFirestore } from '@/firebase';
+import { useAuth, useUser } from '@/firebase';
 import { signInWithEmailAndPassword, createUserWithEmailAndPassword } from 'firebase/auth';
 
 export default function LoginPage() {
   const router = useRouter();
   const { toast } = useToast();
   const auth = useAuth();
-  const firestore = useFirestore();
   const { user, isUserLoading } = useUser();
   const [email, setEmail] = useState('analyst@aptshield.com');
   const [password, setPassword] = useState('password123');
@@ -37,15 +34,19 @@ export default function LoginPage() {
         title: 'Sign-in Successful',
         description: 'Redirecting to your dashboard...',
       });
-      // The onAuthStateChanged listener will handle the redirect.
+      // The onAuthStateChanged listener in the layout will handle the redirect.
     } catch (error: any) {
       if (error.code === 'auth/user-not-found') {
         // If user does not exist, create a new account
+        toast({
+          title: 'First-time user?',
+          description: 'Creating a new account for you...',
+        });
         try {
           await createUserWithEmailAndPassword(auth, email, password);
           toast({
-            title: 'Account Created',
-            description: 'Your new account has been created successfully. Signing you in.',
+            title: 'Account Created & Signed In',
+            description: 'Your new account has been created successfully. Welcome!',
           });
           // After creation, onAuthStateChanged should trigger and redirect.
         } catch (creationError: any) {
@@ -57,7 +58,7 @@ export default function LoginPage() {
           setLoading(false);
         }
       } else {
-        // Handle other sign-in errors
+        // Handle other sign-in errors like invalid credentials
         toast({
           variant: 'destructive',
           title: 'Authentication Failed',
@@ -66,13 +67,13 @@ export default function LoginPage() {
         setLoading(false);
       }
     }
-    // setLoading is handled within error cases. On success, the component will unmount.
+    // No need to set loading to false on success, as the component will unmount.
   };
 
-  // If user data is loading, or user is logged in, show a loading state.
+  // If user data is loading, or user is already logged in, show a loading state.
   if (isUserLoading || user) {
     return (
-      <div className="flex min-h-screen flex-col items-center justify-center">
+      <div className="flex min-h-screen flex-col items-center justify-center bg-background">
         <LoaderCircle className="h-16 w-16 animate-spin text-primary" />
         <p className="mt-4 text-muted-foreground">Loading...</p>
       </div>
@@ -95,7 +96,7 @@ export default function LoginPage() {
           <CardHeader>
             <CardTitle className="font-headline text-2xl">Sign In</CardTitle>
             <CardDescription>
-              Enter your credentials to access the dashboard.
+              Enter your credentials to access the dashboard. A new account will be created if one does not exist.
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
