@@ -1,0 +1,363 @@
+{
+  "entities": {
+    "ThreatAlert": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "ThreatAlert",
+      "type": "object",
+      "description": "Represents a real-time threat alert detected by the system.",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the threat alert."
+        },
+        "timestamp": {
+          "type": "string",
+          "description": "Timestamp of when the threat was detected.",
+          "format": "date-time"
+        },
+        "source": {
+          "type": "string",
+          "description": "Source of the threat alert (e.g., firewall, IDS)."
+        },
+        "threatType": {
+          "type": "string",
+          "description": "Type of threat detected (e.g., malware, phishing)."
+        },
+        "severity": {
+          "type": "string",
+          "description": "Severity level of the threat (Critical, High, Medium, Low)."
+        },
+        "iocs": {
+          "type": "array",
+          "description": "Indicators of Compromise (IOCs) associated with the threat.",
+          "items": {
+            "type": "string"
+          }
+        },
+        "affectedSystems": {
+          "type": "array",
+          "description": "List of affected systems.",
+          "items": {
+            "type": "string"
+          }
+        }
+      },
+      "required": [
+        "id",
+        "timestamp",
+        "source",
+        "threatType",
+        "severity"
+      ]
+    },
+    "DetectionRule": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "DetectionRule",
+      "type": "object",
+      "description": "Represents a custom threat detection rule.",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the detection rule."
+        },
+        "ruleName": {
+          "type": "string",
+          "description": "Name of the detection rule."
+        },
+        "description": {
+          "type": "string",
+          "description": "Description of the detection rule."
+        },
+        "queryLogic": {
+          "type": "string",
+          "description": "Query logic for the detection rule."
+        },
+        "mitreAttackMapping": {
+          "type": "string",
+          "description": "MITRE ATT&CK technique mapped to the rule."
+        },
+        "ruleCategory": {
+          "type": "string",
+          "description": "Category of the rule (e.g., PowerShell Execution, Credential Dumping)."
+        }
+      },
+      "required": [
+        "id",
+        "ruleName",
+        "description",
+        "queryLogic",
+        "mitreAttackMapping"
+      ]
+    },
+    "User": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "User",
+      "type": "object",
+      "description": "Represents a user of the system.",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the user."
+        },
+        "username": {
+          "type": "string",
+          "description": "Username of the user."
+        },
+        "email": {
+          "type": "string",
+          "description": "Email address of the user.",
+          "format": "email"
+        },
+        "role": {
+          "type": "string",
+          "description": "Role of the user (e.g., Security Analyst, SOC Manager, Administrator)."
+        },
+        "isActive": {
+          "type": "boolean",
+          "description": "Indicates if the user account is active."
+        }
+      },
+      "required": [
+        "id",
+        "username",
+        "email",
+        "role",
+        "isActive"
+      ]
+    },
+    "IncidentCase": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "IncidentCase",
+      "type": "object",
+      "description": "Represents an incident case for tracking detected threats.",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the incident case."
+        },
+        "status": {
+          "type": "string",
+          "description": "Status of the incident case (e.g., Open, In Progress, Resolved)."
+        },
+        "assignedAnalystId": {
+          "type": "string",
+          "description": "Reference to User. (Relationship: User 1:N IncidentCase) Unique identifier of the analyst assigned to the incident case."
+        },
+        "timeline": {
+          "type": "array",
+          "description": "Timeline of events related to the incident case.",
+          "items": {
+            "type": "string"
+          }
+        },
+        "resolutionNotes": {
+          "type": "string",
+          "description": "Notes on the resolution of the incident case."
+        },
+        "threatAlertId": {
+          "type": "string",
+          "description": "Reference to ThreatAlert. (Relationship: ThreatAlert 1:N IncidentCase).  The ID of the threat alert associated with this incident."
+        }
+      },
+      "required": [
+        "id",
+        "status",
+        "assignedAnalystId",
+        "threatAlertId"
+      ]
+    },
+    "UserActionLog": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "UserActionLog",
+      "type": "object",
+      "description": "Represents a log entry for user actions within the system, supporting audit logging.",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the user action log entry."
+        },
+        "userId": {
+          "type": "string",
+          "description": "Reference to User. (Relationship: User 1:N UserActionLog).  The ID of the user who performed the action."
+        },
+        "timestamp": {
+          "type": "string",
+          "description": "Timestamp of when the action was performed.",
+          "format": "date-time"
+        },
+        "actionType": {
+          "type": "string",
+          "description": "Type of action performed (e.g., login, rule creation, incident update)."
+        },
+        "details": {
+          "type": "string",
+          "description": "Details of the action performed (e.g., modified rule name, incident case ID)."
+        }
+      },
+      "required": [
+        "id",
+        "userId",
+        "timestamp",
+        "actionType",
+        "details"
+      ]
+    },
+    "IPWhitelist": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "IPWhitelist",
+      "type": "object",
+      "description": "Represents a whitelisted IP address for SOC access.",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the whitelisted IP address."
+        },
+        "ipAddress": {
+          "type": "string",
+          "description": "The whitelisted IP address."
+        },
+        "description": {
+          "type": "string",
+          "description": "Description of why the IP address is whitelisted."
+        },
+        "expirationDate": {
+          "type": "string",
+          "description": "Expiration date for the whitelist entry.",
+          "format": "date-time"
+        }
+      },
+      "required": [
+        "id",
+        "ipAddress",
+        "description"
+      ]
+    }
+  },
+  "auth": {
+    "providers": [
+      "password",
+      "anonymous"
+    ]
+  },
+  "firestore": {
+    "structure": [
+      {
+        "path": "/users/{userId}",
+        "definition": {
+          "entityName": "User",
+          "schema": {
+            "$ref": "#/backend/entities/User"
+          },
+          "description": "Stores user profiles. Path-based ownership enables simple security rules.  User Roles are managed via existence in /roles_admin/{userId}.",
+          "params": [
+            {
+              "name": "userId",
+              "description": "The unique identifier for the user."
+            }
+          ]
+        }
+      },
+      {
+        "path": "/threat_alerts/{threatAlertId}",
+        "definition": {
+          "entityName": "ThreatAlert",
+          "schema": {
+            "$ref": "#/backend/entities/ThreatAlert"
+          },
+          "description": "Stores real-time threat alerts detected by the system.",
+          "params": [
+            {
+              "name": "threatAlertId",
+              "description": "The unique identifier for the threat alert."
+            }
+          ]
+        }
+      },
+      {
+        "path": "/detection_rules/{detectionRuleId}",
+        "definition": {
+          "entityName": "DetectionRule",
+          "schema": {
+            "$ref": "#/backend/entities/DetectionRule"
+          },
+          "description": "Stores custom threat detection rules.",
+          "params": [
+            {
+              "name": "detectionRuleId",
+              "description": "The unique identifier for the detection rule."
+            }
+          ]
+        }
+      },
+      {
+        "path": "/incident_cases/{incidentCaseId}",
+        "definition": {
+          "entityName": "IncidentCase",
+          "schema": {
+            "$ref": "#/backend/entities/IncidentCase"
+          },
+          "description": "Stores incident cases for tracking detected threats.",
+          "params": [
+            {
+              "name": "incidentCaseId",
+              "description": "The unique identifier for the incident case."
+            }
+          ]
+        }
+      },
+      {
+        "path": "/users/{userId}/action_logs/{actionLogId}",
+        "definition": {
+          "entityName": "UserActionLog",
+          "schema": {
+            "$ref": "#/backend/entities/UserActionLog"
+          },
+          "description": "Stores audit logs for user actions. Path-based ownership facilitates easy filtering by user.",
+          "params": [
+            {
+              "name": "userId",
+              "description": "The unique identifier for the user."
+            },
+            {
+              "name": "actionLogId",
+              "description": "The unique identifier for the action log entry."
+            }
+          ]
+        }
+      },
+      {
+        "path": "/ip_whitelist/{ipWhitelistId}",
+        "definition": {
+          "entityName": "IPWhitelist",
+          "schema": {
+            "$ref": "#/backend/entities/IPWhitelist"
+          },
+          "description": "Stores whitelisted IP addresses for SOC access.",
+          "params": [
+            {
+              "name": "ipWhitelistId",
+              "description": "The unique identifier for the whitelisted IP address."
+            }
+          ]
+        }
+      },
+      {
+        "path": "/roles_admin/{userId}",
+        "definition": {
+          "entityName": "User",
+          "schema": {
+            "$ref": "#/backend/entities/User"
+          },
+          "description": "Indicates admin role. Existence over Content is preferred. The existence of a document indicates that the user is an admin.",
+          "params": [
+            {
+              "name": "userId",
+              "description": "The unique identifier for the user."
+            }
+          ]
+        }
+      }
+    ],
+    "reasoning": "The Firestore structure is designed to support the APT Shield application's requirements, focusing on security, scalability, and maintainability. It incorporates key cybersecurity enhancements, including audit logging, IP whitelisting, and considerations for data encryption. The structure adheres to the core design principles of Authorization Independence, Clarity of Intent, DBAC (Database-Based Access Control), and QAPs (Rules are not Filters). Authorization Independence is achieved through denormalization of membership data, while QAPs are supported by segregating data based on access control requirements. User-owned data follows a hierarchical path structure for clear ownership and simplified security rules.\n\nSpecifically:\n\n*   `/users/{userId}`: This path stores user profiles. User-specific data is stored under the user's ID, ensuring clear ownership. Critically important roles are managed via membership in `/roles_admin/{userId}`.\n*   `/threat_alerts/{threatAlertId}`: This collection stores real-time threat alerts. No specific ownership is required. Security rules will need to be written to appropriately control who can read and write these alerts.\n*   `/detection_rules/{detectionRuleId}`: This collection contains custom threat detection rules.\n*   `/incident_cases/{incidentCaseId}`: This collection tracks incident cases related to detected threats.\n*   `/users/{userId}/action_logs/{actionLogId}`: Stores audit logs for each user. This path-based ownership facilitates easy retrieval and filtering of logs by user.\n*   `/ip_whitelist/{ipWhitelistId}`: Stores whitelisted IP addresses for SOC access. This collection is separate to ensure that list operations are only available to SOC members.\n*   `/roles_admin/{userId}`: Presence of document indicates admin role; used to grant permissions. Existence over Content is preferred.\n\nTo address the request for data encryption indicators, consider adding boolean fields (e.g., `isEncrypted`) or metadata fields to the `ThreatAlert` and `DetectionRule` entities. These fields can indicate whether sensitive data within those documents is encrypted. Also the use of Firebase extensions for two-factor authentication and security headers is highly recommended. Session timeouts can be implemented in the client-side application.\n\nTo support backup and disaster recovery, consider using Firebase's built-in backup and restore capabilities or exporting data to Google Cloud Storage."
+  }
+}

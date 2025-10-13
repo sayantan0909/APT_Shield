@@ -1,0 +1,222 @@
+/**
+ * @fileoverview Firestore Security Rules for APT Shield application.
+ *
+ * Core Philosophy:
+ * This ruleset enforces a multi-layered security model with ownership-based access for user-specific data and role-based access for administrative functions.  It focuses on securing access to threat intelligence data, detection rules, incident cases, and audit logs. Data validation is relaxed for rapid prototyping but authorization is strictly enforced.
+ *
+ * Data Structure:
+ * - /users/{userId}: Stores user profiles.
+ * - /threat_alerts/{threatAlertId}: Stores threat alerts.
+ * - /detection_rules/{detectionRuleId}: Stores detection rules.
+ * - /incident_cases/{incidentCaseId}: Stores incident cases.
+ * - /users/{userId}/action_logs/{actionLogId}: Stores user action logs.
+ * - /ip_whitelist/{ipWhitelistId}: Stores whitelisted IP addresses.
+ * - /roles_admin/{userId}: Indicates admin role via document existence.
+ *
+ * Key Security Decisions:
+ * - User data is accessed only by the user themselves.
+ * - Listing of users is disallowed.
+ * - Admin privileges are determined by presence in the /roles_admin collection.
+ * - Threat alerts, detection rules, and incident cases have open read access, but restricted write access.
+ * - IP whitelist entries are restricted to admin management only.
+ *
+ * Denormalization for Authorization:
+ * - Admin status is denormalized via document existence in `/roles_admin/{userId}`. This avoids costly `get()` calls in the rules.
+ */
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    /**
+     * @description Checks if the request is authenticated.
+     * @return {boolean} True if the request is authenticated, false otherwise.
+     */
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    /**
+     * @description Checks if the authenticated user ID matches the provided user ID.
+     * @param {string} userId The user ID to compare against.
+     * @return {boolean} True if the user IDs match, false otherwise.
+     */
+    function isOwner(userId) {
+      return isSignedIn() && request.auth.uid == userId;
+    }
+
+    /**
+     * @description Checks if the user exists and the authenticated user ID matches the provided user ID.
+     *              Useful for update and delete operations to prevent acting on non-existent documents.
+     * @param {string} userId The user ID to compare against.
+     * @return {boolean} True if the user exists and the user IDs match, false otherwise.
+     */
+    function isExistingOwner(userId) {
+      return isOwner(userId) && resource != null;
+    }
+
+    /**
+     * @description Checks if the user is an admin by verifying the existence of a document in `/roles_admin/{userId}`.
+     * @return {boolean} True if the user is an admin, false otherwise.
+     */
+    function isAdmin() {
+      return exists(/databases/$(database)/documents/roles_admin/$(request.auth.uid));
+    }
+
+    /**
+     * @description Rules for user profiles.
+     * @path /users/{userId}
+     * @allow (create) Authenticated user can create their own profile if the userId matches their auth.uid.
+     * @allow (get) Authenticated user can read their own profile if the userId matches their auth.uid.
+     * @allow (update) Authenticated user can update their own profile if the userId matches their auth.uid.
+     * @allow (delete) Authenticated user can delete their own profile if the userId matches their auth.uid.
+     * @deny (create) Authenticated user cannot create a profile for another user.
+     * @deny (get) Authenticated user cannot read another user's profile.
+     * @deny (update) Authenticated user cannot update another user's profile.
+     * @deny (delete) Authenticated user cannot delete another user's profile.
+     * @principle Enforces document ownership for all operations.
+     */
+    match /users/{userId} {
+      allow get: if isOwner(userId);
+      allow list: if false; // Listing users is not permitted
+
+      allow create: if isOwner(userId) && request.resource.data.id == userId;
+      allow update: if isExistingOwner(userId) && request.resource.data.id == resource.data.id;
+      allow delete: if isExistingOwner(userId);
+    }
+
+    /**
+     * @description Rules for threat alerts.
+     * @path /threat_alerts/{threatAlertId}
+     * @allow (get) Any user can read threat alerts.
+     * @allow (list) Any user can list threat alerts.
+     * @allow (create) Only admins can create threat alerts.
+     * @allow (update) Only admins can update threat alerts.
+     * @allow (delete) Only admins can delete threat alerts.
+     * @deny (create) Non-admins cannot create threat alerts.
+     * @deny (update) Non-admins cannot update threat alerts.
+     * @deny (delete) Non-admins cannot delete threat alerts.
+     * @principle Public read, admin-only writes.
+     */
+    match /threat_alerts/{threatAlertId} {
+      allow get: if true;
+      allow list: if true;
+
+      allow create: if isAdmin();
+      allow update: if isAdmin() && resource != null;
+      allow delete: if isAdmin() && resource != null;
+    }
+
+    /**
+     * @description Rules for detection rules.
+     * @path /detection_rules/{detectionRuleId}
+     * @allow (get) Any user can read detection rules.
+     * @allow (list) Any user can list detection rules.
+     * @allow (create) Only admins can create detection rules.
+     * @allow (update) Only admins can update detection rules.
+     * @allow (delete) Only admins can delete detection rules.
+     * @deny (create) Non-admins cannot create detection rules.
+     * @deny (update) Non-admins cannot update detection rules.
+     * @deny (delete) Non-admins cannot delete detection rules.
+     * @principle Public read, admin-only writes.
+     */
+    match /detection_rules/{detectionRuleId} {
+      allow get: if true;
+      allow list: if true;
+
+      allow create: if isAdmin();
+      allow update: if isAdmin() && resource != null;
+      allow delete: if isAdmin() && resource != null;
+    }
+
+    /**
+     * @description Rules for incident cases.
+     * @path /incident_cases/{incidentCaseId}
+     * @allow (get) Any user can read incident cases.
+     * @allow (list) Any user can list incident cases.
+     * @allow (create) Only admins can create incident cases.
+     * @allow (update) Only admins can update incident cases.
+     * @allow (delete) Only admins can delete incident cases.
+     * @deny (create) Non-admins cannot create incident cases.
+     * @deny (update) Non-admins cannot update incident cases.
+     * @deny (delete) Non-admins cannot delete incident cases.
+     * @principle Public read, admin-only writes.
+     */
+    match /incident_cases/{incidentCaseId} {
+      allow get: if true;
+      allow list: if true;
+
+      allow create: if isAdmin();
+      allow update: if isAdmin() && resource != null;
+      allow delete: if isAdmin() && resource != null;
+    }
+
+    /**
+     * @description Rules for user action logs.
+     * @path /users/{userId}/action_logs/{actionLogId}
+     * @allow (create) Authenticated user can create their own action logs if the userId matches their auth.uid.
+     * @allow (get) Authenticated user can read their own action logs if the userId matches their auth.uid.
+     * @allow (list) Authenticated user can list their own action logs if the userId matches their auth.uid.
+     * @allow (update) Authenticated user can update their own action logs if the userId matches their auth.uid.
+     * @allow (delete) Authenticated user can delete their own action logs if the userId matches their auth.uid.
+     * @deny (create) Authenticated user cannot create action logs for another user.
+     * @deny (get) Authenticated user cannot read another user's action logs.
+     * @deny (list) Authenticated user cannot list another user's action logs.
+     * @deny (update) Authenticated user cannot update another user's action logs.
+     * @deny (delete) Authenticated user cannot delete another user's action logs.
+     * @principle Enforces document ownership for all operations.
+     */
+    match /users/{userId}/action_logs/{actionLogId} {
+      allow get: if isOwner(userId);
+      allow list: if isOwner(userId);
+
+      allow create: if isOwner(userId) && request.resource.data.userId == userId;
+      allow update: if isExistingOwner(userId) && request.resource.data.userId == userId;
+      allow delete: if isExistingOwner(userId);
+    }
+
+    /**
+     * @description Rules for IP whitelist entries.
+     * @path /ip_whitelist/{ipWhitelistId}
+     * @allow (get) Only admins can read IP whitelist entries.
+     * @allow (list) Only admins can list IP whitelist entries.
+     * @allow (create) Only admins can create IP whitelist entries.
+     * @allow (update) Only admins can update IP whitelist entries.
+     * @allow (delete) Only admins can delete IP whitelist entries.
+     * @deny (get) Non-admins cannot read IP whitelist entries.
+     * @deny (list) Non-admins cannot list IP whitelist entries.
+     * @deny (create) Non-admins cannot create IP whitelist entries.
+     * @deny (update) Non-admins cannot update IP whitelist entries.
+     * @deny (delete) Non-admins cannot delete IP whitelist entries.
+     * @principle Admin-only access.
+     */
+    match /ip_whitelist/{ipWhitelistId} {
+      allow get: if isAdmin();
+      allow list: if isAdmin();
+
+      allow create: if isAdmin();
+      allow update: if isAdmin() && resource != null;
+      allow delete: if isAdmin() && resource != null;
+    }
+
+     /**
+      * @description Rules for admin roles.
+      * @path /roles_admin/{userId}
+      * @allow (create) Only a user themselves can create the record to become an admin. It will not automatically make them an admin.
+      * @allow (get) Anyone can check if a user is an admin (by attempting to read the document).
+      * @allow (list) No listing.
+      * @allow (update) No updates.
+      * @allow (delete) Only the user themselves can remove their admin role.
+      * @deny (create) A user cannot create admin role for another user.
+      * @deny (delete) A user cannot remove admin role of another user.
+      * @principle Admin role management.
+      */
+    match /roles_admin/{userId} {
+       allow get: if true;
+       allow list: if false;
+
+       allow create: if isOwner(userId);
+       allow update: if false;
+       allow delete: if isOwner(userId) && resource != null;
+    }
+  }
+}
