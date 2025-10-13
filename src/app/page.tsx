@@ -8,9 +8,10 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { useToast } from '@/hooks/use-toast';
-import { useAuth, useUser, initiateEmailSignIn, addDocumentNonBlocking } from '@/firebase';
+import { useAuth, useUser, addDocumentNonBlocking } from '@/firebase';
 import { collection, serverTimestamp } from 'firebase/firestore';
 import { useFirestore } from '@/firebase';
+import { signInWithEmailAndPassword, createUserWithEmailAndPassword } from 'firebase/auth';
 
 export default function LoginPage() {
   const router = useRouter();
@@ -31,38 +32,41 @@ export default function LoginPage() {
   const handleSignIn = async () => {
     setLoading(true);
     try {
-      initiateEmailSignIn(auth, email, password);
-      
-      // The onAuthStateChanged listener in FirebaseProvider will handle the redirect.
-      // We can optimistically show a toast.
+      await signInWithEmailAndPassword(auth, email, password);
       toast({
-        title: 'Signing in...',
-        description: 'You will be redirected shortly.',
+        title: 'Sign-in Successful',
+        description: 'Redirecting to your dashboard...',
       });
-
-      // Log the sign-in action after a short delay to allow auth state to propagate
-      setTimeout(() => {
-        if (auth.currentUser) {
-          const logCollectionRef = collection(firestore, `users/${auth.currentUser.uid}/action_logs`);
-          addDocumentNonBlocking(logCollectionRef, {
-            actionType: 'user-login',
-            timestamp: serverTimestamp(),
-            details: `User signed in from IP: [user-ip-placeholder]`,
-          });
-        }
-      }, 2000);
-
+      // The onAuthStateChanged listener will handle the redirect.
     } catch (error: any) {
-      console.error(error);
-      toast({
-        variant: 'destructive',
-        title: 'Authentication Failed',
-        description: error.message || 'Please check your credentials and try again.',
-      });
-      setLoading(false);
+      if (error.code === 'auth/user-not-found') {
+        // If user does not exist, create a new account
+        try {
+          await createUserWithEmailAndPassword(auth, email, password);
+          toast({
+            title: 'Account Created',
+            description: 'Your new account has been created successfully. Signing you in.',
+          });
+          // After creation, onAuthStateChanged should trigger and redirect.
+        } catch (creationError: any) {
+          toast({
+            variant: 'destructive',
+            title: 'Account Creation Failed',
+            description: creationError.message || 'Could not create a new account.',
+          });
+          setLoading(false);
+        }
+      } else {
+        // Handle other sign-in errors
+        toast({
+          variant: 'destructive',
+          title: 'Authentication Failed',
+          description: error.message || 'Please check your credentials and try again.',
+        });
+        setLoading(false);
+      }
     }
-    // We don't setLoading(false) here because the page will redirect on success.
-    // If there's an error that doesn't get caught by the listener, we might need to handle it.
+    // setLoading is handled within error cases. On success, the component will unmount.
   };
 
   // If user data is loading, or user is logged in, show a loading state.
