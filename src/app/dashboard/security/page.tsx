@@ -19,62 +19,14 @@ import {
   TableRow,
 } from '@/components/ui/table';
 import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select';
-import {
-  Shield,
-  Bell,
-  Clock,
   PlusCircle,
-  MoreHorizontal,
   Trash2,
-  Calendar as CalendarIcon,
 } from 'lucide-react';
-import {
-    useCollection,
-    useFirestore,
-    useMemoFirebase,
-    useUser,
-    addDocumentNonBlocking,
-    deleteDocumentNonBlocking,
-} from '@/firebase';
-import { collection, doc } from 'firebase/firestore';
-import type { AuditLog, WhitelistedIp } from '@/lib/types';
-import { format } from 'date-fns';
-import { Calendar } from '@/components/ui/calendar';
-import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
-import { useState } from 'react';
+import { whitelistedIps } from '@/lib/data';
+import { logs } from '@/lib/data';
 
 
 function IpWhitelistManager() {
-  const firestore = useFirestore();
-  const { data: ipList, isLoading } = useCollection<WhitelistedIp>(useMemoFirebase(() => collection(firestore, 'ip_whitelist'), [firestore]));
-  const [newIp, setNewIp] = useState('');
-  const [newIpDesc, setNewIpDesc] = useState('');
-  const [newIpExpiry, setNewIpExpiry] = useState<Date | undefined>();
-
-  const handleAddIp = () => {
-    if (!newIp || !newIpDesc) return;
-    const ipCollection = collection(firestore, 'ip_whitelist');
-    addDocumentNonBlocking(ipCollection, {
-        ipAddress: newIp,
-        description: newIpDesc,
-        expirationDate: newIpExpiry || null,
-    });
-    setNewIp('');
-    setNewIpDesc('');
-    setNewIpExpiry(undefined);
-  };
-  
-  const handleDeleteIp = (id: string) => {
-    const ipDoc = doc(firestore, 'ip_whitelist', id);
-    deleteDocumentNonBlocking(ipDoc);
-  }
-
   return (
     <Card>
       <CardHeader>
@@ -87,42 +39,29 @@ function IpWhitelistManager() {
       </CardHeader>
       <CardContent>
         <div className="flex flex-col md:flex-row gap-2 mb-4">
-          <Input placeholder="IP Address (e.g., 192.168.1.1)" value={newIp} onChange={(e) => setNewIp(e.target.value)} />
-          <Input placeholder="Description" value={newIpDesc} onChange={(e) => setNewIpDesc(e.target.value)} />
-          <Popover>
-            <PopoverTrigger asChild>
-                <Button variant='outline' className='w-full justify-start text-left font-normal'>
-                    <CalendarIcon className='mr-2 h-4 w-4'/>
-                    {newIpExpiry ? format(newIpExpiry, 'PPP') : <span>Set Expiry</span>}
-                </Button>
-            </PopoverTrigger>
-            <PopoverContent className='w-auto p-0'>
-                <Calendar mode='single' selected={newIpExpiry} onSelect={setNewIpExpiry} initialFocus/>
-            </PopoverContent>
-          </Popover>
-
-          <Button onClick={handleAddIp} className='md:w-auto w-full'>
+          <Input placeholder="IP Address or CIDR (e.g., 192.168.1.0/24)" />
+          <Input placeholder="Description" />
+          <Button>
             <PlusCircle className="mr-2 h-4 w-4" /> Add
           </Button>
         </div>
         <Table>
           <TableHeader>
             <TableRow>
-              <TableHead>IP Address</TableHead>
+              <TableHead>IP Address / Range</TableHead>
               <TableHead>Description</TableHead>
               <TableHead>Expires</TableHead>
               <TableHead className="text-right">Actions</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
-            {isLoading && <TableRow><TableCell colSpan={4}>Loading...</TableCell></TableRow>}
-            {ipList?.map((ip) => (
+            {whitelistedIps?.map((ip) => (
               <TableRow key={ip.id}>
                 <TableCell className="font-code">{ip.ipAddress}</TableCell>
                 <TableCell>{ip.description}</TableCell>
-                <TableCell>{ip.expirationDate ? format(ip.expirationDate.toDate(), 'PPP') : 'Never'}</TableCell>
+                <TableCell>{ip.expirationDate ? new Date(ip.expirationDate).toLocaleDateString() : 'Never'}</TableCell>
                 <TableCell className="text-right">
-                  <Button variant="ghost" size="icon" onClick={() => handleDeleteIp(ip.id)}>
+                  <Button variant="ghost" size="icon">
                     <Trash2 className="h-4 w-4 text-destructive" />
                   </Button>
                 </TableCell>
@@ -136,36 +75,35 @@ function IpWhitelistManager() {
 }
 
 function AuditLogViewer() {
-    const firestore = useFirestore();
-    const { user } = useUser();
-    const auditLogQuery = useMemoFirebase(() => user ? collection(firestore, `users/${user.uid}/action_logs`) : null, [firestore, user]);
-    const { data: logs, isLoading } = useCollection<AuditLog>(auditLogQuery);
-
     return (
         <Card>
             <CardHeader>
                 <CardTitle className='font-headline text-xl'>Audit Log</CardTitle>
-                <CardDescription>Review of all actions taken by the current user.</CardDescription>
+                <CardDescription>Review of all actions taken by users in the system.</CardDescription>
             </CardHeader>
             <CardContent>
                 <Table>
                     <TableHeader>
                         <TableRow>
                             <TableHead>Timestamp</TableHead>
+                            <TableHead>User</TableHead>
                             <TableHead>Action</TableHead>
                             <TableHead>Details</TableHead>
                         </TableRow>
                     </TableHeader>
                     <TableBody>
-                        {isLoading && <TableRow><TableCell colSpan={3}>Loading logs...</TableCell></TableRow>}
-                        {logs?.map(log => (
-                            <TableRow key={log.id}>
-                                <TableCell>{log.timestamp ? format(log.timestamp.toDate(), 'Pp') : 'N/A'}</TableCell>
-                                <TableCell className='font-medium'>{log.actionType}</TableCell>
-                                <TableCell className='font-code text-xs'>{log.details}</TableCell>
-                            </TableRow>
-                        ))}
-                         {!isLoading && logs?.length === 0 && <TableRow><TableCell colSpan={3}>No audit logs found for this user.</TableCell></TableRow>}
+                       <TableRow>
+                            <TableCell>{new Date().toLocaleString()}</TableCell>
+                            <TableCell className='font-medium'>analyst@aptshield.com</TableCell>
+                            <TableCell>Rule Modified</TableCell>
+                            <TableCell className='font-code text-xs'>Changed severity of "Detect Mimikatz" to Critical</TableCell>
+                        </TableRow>
+                        <TableRow>
+                            <TableCell>{new Date(Date.now() - 5*60000).toLocaleString()}</TableCell>
+                            <TableCell className='font-medium'>admin@aptshield.com</TableCell>
+                            <TableCell>User Login</TableCell>
+                            <TableCell className='font-code text-xs'>Successful login from IP: 203.0.113.1</TableCell>
+                        </TableRow>
                     </TableBody>
                 </Table>
             </CardContent>
@@ -244,7 +182,7 @@ export default function SecurityPage() {
       <Card>
         <CardHeader>
           <CardTitle className="font-headline text-xl">
-            Backup & Disaster Recovery
+            Backup &amp; Disaster Recovery
           </CardTitle>
           <CardDescription>
             Status of data backups and recovery points.

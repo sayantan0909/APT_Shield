@@ -15,7 +15,6 @@ import {
   TestTube,
   Lock,
 } from 'lucide-react';
-import { useAuth } from '@/firebase';
 import {
   Sidebar,
   SidebarHeader,
@@ -27,14 +26,16 @@ import {
   SidebarFooter,
 } from '@/components/shared/sidebar-layout';
 import { Button } from '../ui/button';
+import { useRouter } from 'next/navigation';
 
 export function AppSidebar() {
   const pathname = usePathname();
-  const auth = useAuth();
+  const router = useRouter();
   const isActive = (path: string) => pathname.startsWith(path);
 
   const handleLogout = () => {
-    auth.signOut();
+    // In a real app, this would clear session/local storage
+    router.push('/');
   };
 
   return (

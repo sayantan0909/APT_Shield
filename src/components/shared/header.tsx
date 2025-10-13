@@ -1,7 +1,7 @@
 'use client';
 
 import Link from 'next/link';
-import { usePathname } from 'next/navigation';
+import { usePathname, useRouter } from 'next/navigation';
 import { Menu, Settings, User, LogOut } from 'lucide-react';
 import {
   DropdownMenu,
@@ -20,7 +20,6 @@ import {
   SheetTrigger,
 } from '@/components/ui/sheet';
 import { AppSidebar } from './app-sidebar';
-import { useAuth, useUser } from '@/firebase';
 
 function getBreadcrumb(pathname: string) {
   if (pathname === '/dashboard') return 'Dashboard';
@@ -34,12 +33,11 @@ function getBreadcrumb(pathname: string) {
 
 export function Header() {
   const pathname = usePathname();
-  const auth = useAuth();
-  const { user } = useUser();
+  const router = useRouter();
   const userAvatar = PlaceHolderImages.find((img) => img.id === 'user-avatar');
 
   const handleLogout = () => {
-    auth.signOut();
+    router.push('/');
   };
 
   const getInitials = (email: string | null | undefined) => {
@@ -72,25 +70,20 @@ export function Header() {
           <DropdownMenuTrigger asChild>
             <Button variant="ghost" size="icon" className="rounded-full">
               <Avatar className="h-8 w-8">
-                {user?.photoURL ? (
-                  <AvatarImage
-                    src={user.photoURL}
-                    alt={user.displayName || 'User avatar'}
-                  />
-                ) : userAvatar && (
+                {userAvatar && (
                   <AvatarImage
                     src={userAvatar.imageUrl}
                     alt="User avatar"
                     data-ai-hint={userAvatar.imageHint}
                   />
                 )}
-                <AvatarFallback>{getInitials(user?.email)}</AvatarFallback>
+                <AvatarFallback>{getInitials('analyst@aptshield.com')}</AvatarFallback>
               </Avatar>
               <span className="sr-only">Toggle user menu</span>
             </Button>
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end">
-            <DropdownMenuLabel>{user?.email || 'User'}</DropdownMenuLabel>
+            <DropdownMenuLabel>analyst@aptshield.com</DropdownMenuLabel>
             <DropdownMenuSeparator />
             <DropdownMenuItem>
               <User className="mr-2 h-4 w-4" />

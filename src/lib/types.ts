@@ -68,17 +68,9 @@ export type ThreatHuntingQuery = {
     tags: string[];
 };
 
-export type AuditLog = {
-    id: string;
-    userId: string;
-    timestamp: any; // Firestore Timestamp
-    actionType: string;
-    details: string;
-}
-
 export type WhitelistedIp = {
     id: string;
     ipAddress: string;
     description: string;
-    expirationDate?: any; // Firestore Timestamp
+    expirationDate?: string | null;
 }
