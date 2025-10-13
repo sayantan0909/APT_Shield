@@ -14,7 +14,7 @@ export default function DashboardLayout({
       <AppSidebar />
       <div className="flex flex-col">
         <Header />
-        <main className="flex-1 bg-background p-4 md:p-6 lg:p-8">
+        <main className="flex-1 bg-background p-4 md:p-6 lg:p-8 transition-colors duration-300">
           {children}
         </main>
       </div>

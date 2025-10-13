@@ -24,7 +24,7 @@ const stats = [
     title: 'Open Incidents',
     value: dashboardStats.openIncidents,
     icon: ClipboardList,
-    color: 'text-warning-default',
+    color: 'text-warning',
   },
   {
     title: 'Active Rules',

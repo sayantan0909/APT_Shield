@@ -38,7 +38,7 @@ const getSeverityVariant = (severity: Severity) => {
 
 const getScoreColor = (score: number) => {
   if (score > 90) return 'text-destructive';
-  if (score > 70) return 'text-warning-default';
+  if (score > 70) return 'text-warning';
   if (score > 50) return 'text-yellow-500';
   return 'text-green-500';
 }

@@ -13,34 +13,28 @@ import {
 } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { useToast } from '@/hooks/use-toast';
-import { Alert, AlertDescription } from '@/components/ui/alert';
+import { ThemeToggle } from '@/components/shared/theme-toggle';
 
 export default function LoginPage() {
   const router = useRouter();
-  const { toast } = useToast();
-  const [email, setEmail] = useState('analyst@aptshield.com');
-  const [password, setPassword] = useState('password123');
   const [loading, setLoading] = useState(false);
-  const [errorMsg, setErrorMsg] = useState('');
 
-  const handleSignIn = async () => {
+  const handleSignIn = async (e: React.FormEvent) => {
+    e.preventDefault();
     setLoading(true);
-    setErrorMsg('');
 
-    // Simulate network delay
+    // Simulate network delay for demo purposes
     await new Promise(resolve => setTimeout(resolve, 500));
 
     // Bypass authentication and redirect to dashboard
-    toast({
-      title: 'Sign-in Successful',
-      description: 'Redirecting to your dashboard...',
-    });
     router.push('/dashboard');
   };
 
   return (
-    <main className="flex min-h-screen flex-col items-center justify-center p-4">
+    <main className="flex min-h-screen flex-col items-center justify-center p-4 bg-background">
+       <div className="absolute top-4 right-4">
+          <ThemeToggle />
+        </div>
       <div className="w-full max-w-md">
         <div className="mb-8 flex flex-col items-center text-center">
           <ShieldCheck className="h-16 w-16 text-primary" />
@@ -58,42 +52,35 @@ export default function LoginPage() {
               Enter any credentials to access the demo dashboard.
             </CardDescription>
           </CardHeader>
-          <CardContent className="space-y-4">
-            {errorMsg && (
-                <Alert variant="destructive">
-                    <AlertDescription>
-                        {errorMsg}
-                    </AlertDescription>
-                </Alert>
-            )}
-            <div className="space-y-2">
-              <Label htmlFor="email">Email</Label>
-              <Input
-                id="email"
-                type="email"
-                placeholder="analyst@aptshield.com"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                disabled={loading}
-              />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="password">Password</Label>
-              <Input
-                id="password"
-                type="password"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                disabled={loading}
-              />
-            </div>
-            <Button onClick={handleSignIn} disabled={loading} className="w-full">
-              {loading ? (
-                <LoaderCircle className="animate-spin" />
-              ) : (
-                'Sign In'
-              )}
-            </Button>
+          <CardContent>
+            <form onSubmit={handleSignIn} className="space-y-4">
+              <div className="space-y-2">
+                <Label htmlFor="email">Email</Label>
+                <Input
+                  id="email"
+                  type="email"
+                  placeholder="analyst@aptshield.com"
+                  defaultValue="analyst@aptshield.com"
+                  disabled={loading}
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="password">Password</Label>
+                <Input
+                  id="password"
+                  type="password"
+                  defaultValue="password"
+                  disabled={loading}
+                />
+              </div>
+              <Button type="submit" disabled={loading} className="w-full">
+                {loading ? (
+                  <LoaderCircle className="animate-spin" />
+                ) : (
+                  'Sign In'
+                )}
+              </Button>
+            </form>
           </CardContent>
         </Card>
       </div>

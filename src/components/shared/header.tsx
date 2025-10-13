@@ -20,6 +20,7 @@ import {
   SheetTrigger,
 } from '@/components/ui/sheet';
 import { AppSidebar } from './app-sidebar';
+import { ThemeToggle } from './theme-toggle';
 
 function getBreadcrumb(pathname: string) {
   if (pathname === '/dashboard') return 'Dashboard';
@@ -46,7 +47,7 @@ export function Header() {
   };
 
   return (
-    <header className="sticky top-0 z-10 flex h-16 items-center gap-4 border-b bg-background/80 px-4 backdrop-blur-sm md:px-6">
+    <header className="sticky top-0 z-30 flex h-16 items-center gap-4 border-b bg-background/80 px-4 backdrop-blur-sm md:px-6">
       <div className="flex items-center gap-2 md:hidden">
          <Sheet>
             <SheetTrigger asChild>
@@ -66,6 +67,7 @@ export function Header() {
       </div>
 
       <div className="flex items-center gap-4">
+        <ThemeToggle />
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
             <Button variant="ghost" size="icon" className="rounded-full">
