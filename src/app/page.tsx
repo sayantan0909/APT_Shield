@@ -2,14 +2,35 @@
 
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { ShieldCheck, LoaderCircle } from 'lucide-react';
+import { ShieldCheck, LoaderCircle, Mail } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+  DialogFooter,
+  DialogClose
+} from "@/components/ui/dialog"
 import { useToast } from '@/hooks/use-toast';
 import { useAuth, useUser } from '@/firebase';
-import { signInWithEmailAndPassword, createUserWithEmailAndPassword } from 'firebase/auth';
+import {
+  signInWithEmailAndPassword,
+  createUserWithEmailAndPassword,
+  sendPasswordResetEmail,
+} from 'firebase/auth';
+import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 
 export default function LoginPage() {
   const router = useRouter();
@@ -19,15 +40,29 @@ export default function LoginPage() {
   const [email, setEmail] = useState('analyst@aptshield.com');
   const [password, setPassword] = useState('password123');
   const [loading, setLoading] = useState(false);
+  const [errorMsg, setErrorMsg] = useState('');
+  const [showResetLink, setShowResetLink] = useState(false);
+  const [resetEmail, setResetEmail] = useState('');
+  const [isResetDialogOpen, setResetDialogOpen] = useState(false);
+
 
   useEffect(() => {
     if (!isUserLoading && user) {
       router.push('/dashboard');
     }
   }, [user, isUserLoading, router]);
+  
+  useEffect(() => {
+    if(email) {
+      setResetEmail(email);
+    }
+  }, [email])
 
   const handleSignIn = async () => {
     setLoading(true);
+    setErrorMsg('');
+    setShowResetLink(false);
+
     try {
       await signInWithEmailAndPassword(auth, email, password);
       toast({
@@ -36,39 +71,65 @@ export default function LoginPage() {
       });
       // The onAuthStateChanged listener in the layout will handle the redirect.
     } catch (error: any) {
-      if (error.code === 'auth/user-not-found') {
-        // If user does not exist, create a new account
-        toast({
-          title: 'First-time user?',
-          description: 'Creating a new account for you...',
-        });
-        try {
-          await createUserWithEmailAndPassword(auth, email, password);
-          toast({
-            title: 'Account Created & Signed In',
-            description: 'Your new account has been created successfully. Welcome!',
-          });
-          // After creation, onAuthStateChanged should trigger and redirect.
-        } catch (creationError: any) {
-          toast({
-            variant: 'destructive',
-            title: 'Account Creation Failed',
-            description: creationError.message || 'Could not create a new account.',
-          });
-          setLoading(false);
-        }
-      } else {
-        // Handle other sign-in errors like invalid credentials
-        toast({
-          variant: 'destructive',
-          title: 'Authentication Failed',
-          description: error.message || 'Please check your credentials and try again.',
-        });
         setLoading(false);
-      }
+        switch (error.code) {
+          case 'auth/user-not-found':
+            // If user does not exist, create a new account
+            toast({
+              title: 'First-time user?',
+              description: 'Creating a new account for you...',
+            });
+            try {
+              await createUserWithEmailAndPassword(auth, email, password);
+              toast({
+                title: 'Account Created & Signed In',
+                description: 'Your new account has been created successfully. Welcome!',
+              });
+              // After creation, onAuthStateChanged should trigger and redirect.
+            } catch (creationError: any) {
+              setErrorMsg(creationError.message || 'Could not create a new account.');
+            }
+            break;
+          case 'auth/wrong-password':
+          case 'auth/invalid-credential':
+            setErrorMsg('Invalid email or password. Please try again.');
+            setShowResetLink(true);
+            break;
+          default:
+            setErrorMsg(error.message || 'An unexpected error occurred.');
+            break;
+        }
     }
-    // No need to set loading to false on success, as the component will unmount.
   };
+
+  const handlePasswordReset = async () => {
+    if (!resetEmail) {
+        toast({
+            variant: "destructive",
+            title: "Email required",
+            description: "Please enter your email address to reset your password.",
+        })
+        return;
+    }
+    setLoading(true);
+    try {
+        await sendPasswordResetEmail(auth, resetEmail);
+        toast({
+            title: "Password Reset Email Sent",
+            description: `An email has been sent to ${resetEmail} with instructions to reset your password.`,
+        });
+        setResetDialogOpen(false);
+    } catch (error: any) {
+        toast({
+            variant: "destructive",
+            title: "Error",
+            description: error.message || "Failed to send password reset email.",
+        })
+    } finally {
+        setLoading(false);
+    }
+  }
+
 
   // If user data is loading, or user is already logged in, show a loading state.
   if (isUserLoading || user) {
@@ -100,6 +161,50 @@ export default function LoginPage() {
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
+            {errorMsg && (
+                <Alert variant="destructive">
+                    <AlertDescription>
+                        {errorMsg}
+                        {showResetLink && (
+                           <Dialog open={isResetDialogOpen} onOpenChange={setResetDialogOpen}>
+                             <DialogTrigger asChild>
+                                <Button variant="link" className="p-0 pl-1 h-auto text-destructive-foreground underline">Forgot Password?</Button>
+                             </DialogTrigger>
+                             <DialogContent>
+                                <DialogHeader>
+                                    <DialogTitle>Reset Your Password</DialogTitle>
+                                    <DialogDescription>
+                                        Enter your email address below and we'll send you a link to reset your password.
+                                    </DialogDescription>
+                                </DialogHeader>
+                                <div className="space-y-2">
+                                    <Label htmlFor="reset-email">Email</Label>
+                                    <div className="relative">
+                                        <Mail className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                                        <Input 
+                                            id="reset-email" 
+                                            type="email"
+                                            placeholder='you@example.com'
+                                            value={resetEmail}
+                                            onChange={(e) => setResetEmail(e.target.value)}
+                                            className="pl-10"
+                                        />
+                                    </div>
+                                </div>
+                                <DialogFooter>
+                                    <DialogClose asChild>
+                                        <Button variant="outline">Cancel</Button>
+                                    </DialogClose>
+                                    <Button onClick={handlePasswordReset} disabled={loading}>
+                                        {loading ? <LoaderCircle className="animate-spin"/> : "Send Reset Email"}
+                                    </Button>
+                                </DialogFooter>
+                             </DialogContent>
+                           </Dialog>
+                        )}
+                    </AlertDescription>
+                </Alert>
+            )}
             <div className="space-y-2">
               <Label htmlFor="email">Email</Label>
               <Input
