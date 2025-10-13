@@ -1,3 +1,5 @@
+"use client";
+
 import {
   Table,
   TableBody,
@@ -25,7 +27,7 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { Badge } from '@/components/ui/badge';
-import { RuleEditor } from './components/rule-editor';
+import { RuleEditor } from './rule-editor';
 
 export default function RulesPage() {
   return (
@@ -87,10 +89,13 @@ export default function RulesPage() {
                       <DropdownMenuLabel>Actions</DropdownMenuLabel>
                       <DropdownMenuSeparator />
                       <RuleEditor rule={rule}>
-                        {/* The component needs a child to trigger, we provide one but it's not visible */}
-                        <DropdownMenuItem onSelect={(e) => e.preventDefault()}>Edit</DropdownMenuItem>
+                        <DropdownMenuItem onSelect={(e) => e.preventDefault()}>
+                          Edit
+                        </DropdownMenuItem>
                       </RuleEditor>
-                      <DropdownMenuItem className="text-destructive">Delete</DropdownMenuItem>
+                      <DropdownMenuItem className="text-destructive">
+                        Delete
+                      </DropdownMenuItem>
                     </DropdownMenuContent>
                   </DropdownMenu>
                 </TableCell>
