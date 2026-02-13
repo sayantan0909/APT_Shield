@@ -1,5 +1,6 @@
 Project Title
 
+<<<<<<< HEAD
 Name: APT Shield — Adaptive Threat Detection & Response Overview
 
 Purpose: Centralized dashboard for detecting, investigating, and responding to advanced persistent threat (APT) activity across logs and alerts. Highlights: Fast triage views, incident tracking, threat-hunting workspace, AI-assisted summarization of suspicious logs. Features
